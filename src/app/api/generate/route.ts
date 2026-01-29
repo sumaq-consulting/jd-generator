@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client lazily to avoid build-time errors
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+  return new OpenAI({ apiKey });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +21,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const openai = getOpenAIClient();
 
     const prompt = `Generate a professional job description for the following role. Return the response as a JSON object with these exact fields:
 
@@ -84,3 +91,6 @@ Return ONLY the JSON object, no markdown formatting.`;
     );
   }
 }
+
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = "force-dynamic";
